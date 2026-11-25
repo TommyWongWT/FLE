@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FLE Study Coach</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">YOUR PERSONAL STUDY SPACE</p><h1>FLE Study Coach</h1><p>Make progress, one session at a time.</p></div>
+    <div class="top-actions">
+      <button id="api-check" class="secondary">Check APIs</button>
+      <div class="api-statuses" aria-live="polite">
+        <span id="api-status">Grok: not checked</span>
+        <span id="gemini-api-status">Gemini: not checked</span>
+        <span class="api-note">Model information only; generation and billing not verified.</span>
+      </div>
+      <button id="export" class="secondary">Export backup</button><label class="button secondary" for="import">Import backup</label><input id="import" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+  <div id="notice" role="status" aria-live="polite"></div>
+  <div class="layout">
+    <nav aria-label="Study sections">
+      <button data-tab="learn" class="active">Start learning</button>
+      <button data-tab="practice">Practice &amp; review</button>
+      <button data-tab="topics">Syllabus &amp; notes</button>
+      <button data-tab="progress">Progress tracker</button>
+      <button data-tab="mock">Mock exam</button>
+      <button data-tab="submission">Technical submission</button>
+    </nav>
+    <main>
+      <section id="learn" class="tab">
+        <div class="section-heading"><div><p class="eyebrow">YOUR STUDY PATH</p><h2>Choose what to learn</h2><p>Select one or more fields, learn at your own pace, then try a past-paper question.</p></div></div>
+        <div class="card">
+          <h3>1. Choose your fields</h3>
+          <p>These five fields follow the compulsory modules in ICE's <a href="https://www.ice.org.uk/media/330jhpa4/ice-exams-syllabus.pdf" target="_blank" rel="noopener noreferrer">exam syllabus</a>. All remain relevant to the exam; your selection is a study focus, not an exemption.</p>
+          <div id="learn-fields" class="field-grid"></div>
+          <p id="learn-selection" class="muted"></p>
+        </div>
+        <div class="card">
+          <h3>2. Learn and check your understanding</h3>
+          <p class="muted">Generate a short lesson, a fictional example and original self-check questions. Review AI output against ICE's current syllabus and reliable sources.</p>
+          <div class="callout">The selected field names, but not your notes or answers, are sent as study data to xAI when you request a lesson. Charges may apply. AI-generated material is not official ICE guidance.</div>
+          <button id="learn-generate">Create lesson with Grok</button>
+          <p id="lesson-fields" class="muted"></p>
+          <label>Your lesson and notes<textarea id="learn-lesson" rows="12" placeholder="Your lesson will appear here. You can also write your own notes."></textarea></label>
+          <div class="callout">A Gemini cross-check sends the lesson and its field names to Google. Do not include confidential information or official documents. Both AI opinions can be wrong; charges may apply.</div>
+          <button id="learn-crosscheck-button" class="secondary">Cross-check lesson with Gemini</button>
+          <label>Gemini cross-check <span class="muted">(rerun after changing your lesson)</span><textarea id="learn-crosscheck" rows="6" placeholder="Gemini's separate cross-check appears here."></textarea></label>
+        </div>
+        <div class="card">
+          <h3>3. Test yourself with a past paper</h3>
+          <p>Choose a sitting, open its scenario, and select a question yourself. The catalog does not map questions to fields, so check that the question fits your focus. Avoid the examiner's report until after your unaided attempt.</p>
+          <label>Past-paper sitting<select id="learn-sitting"></select></label>
+          <div id="learn-links" class="links"></div>
+          <button id="learn-practice">Start past-paper attempt</button>
+        </div>
+      </section>
+      <section id="practice" class="tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">01 / DIAGNOSE &amp; PRACTICE</p><h2>Practice &amp; review</h2><p>Write unaided first. Pause whenever you need to.</p></div><button id="new-attempt">+ New attempt</button></div>
+        <div class="grid">
+          <aside class="card"><h3>Your attempts</h3><div id="attempt-list" class="item-list"></div></aside>
+          <div class="card">
+            <div id="attempt-empty" class="empty">Start a new attempt to choose a sitting and write your answer.</div>
+            <div id="attempt-editor" hidden>
+              <div class="row"><label>Sitting<select id="attempt-sitting"></select></label><label>Question number / title<input id="attempt-question" placeholder="e.g. Question 1"></label></div>
+              <p id="attempt-fields" class="muted"></p>
+              <div id="document-links" class="links"></div>
+              <label>Question and relevant scenario context<textarea id="attempt-context" rows="4" placeholder="Summarise the question and relevant scenario details."></textarea></label>
+              <label>Your answer<textarea id="attempt-answer" rows="10" placeholder="Write your own answer here..."></textarea></label>
+              <div class="timer"><span>Active time <strong id="practice-time">00:00:00</strong></span><button id="practice-toggle" class="secondary">Start timer</button><span class="muted">Stop or pause anytime; time is not an exam limit.</span></div>
+              <label>Evidence for review <span class="muted">(optional)</span><textarea id="attempt-evidence" rows="4" placeholder="Add your own notes on guidance or the examiner's report, with document and page references."></textarea></label>
+              <div class="callout">AI feedback is an estimate, not an official mark. The sitting, question, selected fields, answer and evidence are sent to xAI when you request feedback. Do not include confidential project information or upload official documents. API charges may apply.</div>
+              <div class="actions"><button id="review">Review my answer</button><button id="challenge" class="secondary">Challenge my reasoning</button></div>
+              <label>Grok feedback / challenge<textarea id="attempt-feedback" rows="8" placeholder="Feedback appears here and can be edited."></textarea></label>
+              <div class="callout">Cross-checking sends the sitting, selected fields, question/context, answer, review evidence and Grok feedback above to Google Gemini. Do not send confidential information or official documents. Both AI opinions may be wrong; check official sources. Charges may apply.</div>
+              <button id="attempt-crosscheck-button" class="secondary">Cross-check with Gemini</button>
+              <label>Gemini cross-check <span class="muted">(rerun after changing your answer or Grok feedback)</span><textarea id="attempt-crosscheck" rows="8" placeholder="Gemini's separate cross-check appears here."></textarea></label>
+              <label>Next action<textarea id="attempt-next" rows="2" placeholder="What will you improve next?"></textarea></label>
+              <button id="delete-attempt" class="danger">Delete attempt</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="topics" class="tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">02 / LEARN</p><h2>Syllabus &amp; notes</h2><p>Build your own map using the <a id="syllabus-link" target="_blank" rel="noopener noreferrer">official syllabus on Drive</a>; check it is current. Link topics to sittings and questions.</p></div><button id="new-topic">+ Add topic</button></div>
+        <div class="grid"><aside class="card"><h3>Topics &amp; weaknesses</h3><div id="topic-list" class="item-list"></div></aside><div class="card"><div id="topic-empty" class="empty">Add a topic to start your syllabus map.</div><div id="topic-editor" hidden>
+          <div class="row"><label>Topic<input id="topic-title" placeholder="e.g. Risk management"></label><label>Confidence<select id="topic-confidence"><option>Needs work</option><option>Developing</option><option>Confident</option></select></label></div>
+          <div class="row"><label>Related sitting<select id="topic-sitting"></select></label><label>Related question<input id="topic-question" placeholder="e.g. Question 2"></label></div>
+          <label>Learning notes and scenario examples<textarea id="topic-notes" rows="10" placeholder="Capture what you learned, and how it applies."></textarea></label>
+          <label>Next action<input id="topic-next" placeholder="e.g. Revisit risk allocation"></label><button id="delete-topic" class="danger">Delete topic</button>
+        </div></div></div>
+      </section>
+      <section id="progress" class="tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">03 / REPEAT</p><h2>Progress tracker</h2><p>Your practice history and recurring areas to revisit.</p></div></div>
+        <div id="progress-summary" class="stats"></div><div class="card"><h3>Attempts</h3><div id="progress-attempts"></div></div><div class="card"><h3>Weaknesses &amp; next actions</h3><div id="progress-topics"></div></div>
+      </section>
+      <section id="mock" class="tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">04 / BUILD ENDURANCE</p><h2>Mock exam</h2><p>Practice five questions over six hours of working time. Breaks are separate and do not count while paused.</p></div></div>
+        <div class="card"><div class="row"><label>Mock sitting<select id="mock-sitting"></select></label><label>Session goal (minutes)<input id="mock-goal" type="number" min="1" max="360" value="30"></label></div>
+          <div class="mock-clock"><span>Working time remaining</span><strong id="mock-time">06:00:00</strong><span id="mock-session">Session: 00:00:00</span></div>
+          <div class="actions"><button id="mock-toggle">Start mock</button><button id="mock-reset" class="secondary">Reset mock timer</button></div>
+          <p class="muted">The session goal is a reminder, not a limit. Pausing, closing or hiding the page stops the timer. Create one practice attempt per question; your answers are saved separately.</p>
+          <div id="mock-links" class="links"></div><h3>Question checklist</h3><div id="mock-checklist"></div>
+          <label>Mock review and next actions<textarea id="mock-notes" rows="5" placeholder="Reflect on timing, coverage and recurring issues."></textarea></label>
+        </div>
+      </section>
+      <section id="submission" class="tab" hidden>
+        <div class="section-heading"><div><p class="eyebrow">05 / PROJECT EVIDENCE</p><h2>Technical submission</h2><p>Develop your own evidence alongside exam practice.</p></div></div>
+        <div class="card">
+          <p>Check the <a href="https://ice.org.uk/your-career/professional-qualification-support/getting-professionally-qualified/further-learning-exam" target="_blank" rel="noopener noreferrer">current ICE requirements</a> and guidance yourself. AI cannot verify requirements unless you supply them.</p>
+          <label>Project evidence inventory<textarea id="submission-evidence" rows="7" placeholder="Record your role, decisions, technical evidence, outcomes and gaps. Avoid confidential details."></textarea></label>
+          <label>Requirements or criteria to check<textarea id="submission-criteria" rows="5" placeholder="Summarise current requirements with a source and date."></textarea></label>
+          <label>Draft or review notes<textarea id="submission-draft" rows="8" placeholder="Develop your own submission here."></textarea></label>
+          <div class="callout">When you request review, these three fields are sent to xAI. Do not send confidential project information or official documents. Feedback is an AI estimate, not an ICE assessment.</div>
+          <button id="submission-review">Review submission</button>
+          <label>Grok feedback<textarea id="submission-feedback" rows="8" placeholder="Feedback appears here and can be edited."></textarea></label>
+          <div class="callout">Cross-checking sends the project evidence, requirements, draft and Grok feedback above to Google Gemini. Do not send confidential information or official documents. Both AI opinions may be wrong; check official sources. Charges may apply.</div>
+          <button id="submission-crosscheck-button" class="secondary">Cross-check with Gemini</button>
+          <label>Gemini cross-check <span class="muted">(rerun after changing your draft or Grok feedback)</span><textarea id="submission-crosscheck" rows="8" placeholder="Gemini's separate cross-check appears here."></textarea></label>
+        </div>
+      </section>
+      <footer>Saved in this browser on this device. Export backups regularly; clearing browser data can erase your work. Official documents remain on Drive.</footer>
+    </main>
+  </div>
+</body>
+</html>
