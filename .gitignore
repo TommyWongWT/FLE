@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.idea/
+*.swp
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+*.log
+.cache/
+
+# Official ICE papers stay off GitHub
+official-pdfs/
+**/official-pdfs/
+FLE_scenario_*.pdf
+FLE_examiners_report_*.pdf
+ICE_Further_Learning_Exam_guidance.pdf
+ICE_exams_syllabus.pdf
+
+# SQLite transients
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Cursor local
+.cursor/
+
