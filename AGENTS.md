@@ -1,4 +1,4 @@
-﻿# Agent instructions
+# Agent instructions
 
 This is a learning repository for ICE FLE past-paper practice and general study.
 
