@@ -14,13 +14,13 @@ The sitting this repo is aimed at is **23 March 2027 (Hong Kong time only)**. Ap
 - `explorations/` — one topic per folder or file
 - `notes/` — durable notes from grill-me or pstack sessions
 - `fle/TIMELINE.md` — dates and a week-by-week plan for the 23 March 2027 sitting (Hong Kong time)
-- `fle/db/` — past-paper catalog (metadata and Drive pointers only)
+- `fle/db/` — past-paper catalog (metadata and Drive pointers only, including question counts)
 - `fle/<sitting-id>/` — my own answers and notes, by sitting
 - `prompts/grill-me-fle.md` — grill-me playbook for FLE answers
 
 ## Past-paper database
 
-The 11 official sittings are indexed in `fle/db/sittings.json` and `fle/db/fle.db`. Official scenario PDFs, examiner reports, guidance, and syllabus stay off GitHub; open them from [this Drive folder](https://drive.google.com/drive/folders/1lF5rH6ckpH3ZeRI6DLLNUOjzqqTm-s8u). Notes may quote exam text.
+The 11 official sittings are indexed in `fle/db/sittings.json` and `fle/db/fle.db`, including each paper's question count and any named parts. Official scenario PDFs, examiner reports, guidance, and syllabus stay off GitHub; open them from [this Drive folder](https://drive.google.com/drive/folders/1lF5rH6ckpH3ZeRI6DLLNUOjzqqTm-s8u). Notes may quote exam text.
 
 ## HTML study coach
 
@@ -50,7 +50,7 @@ Use **Check APIs** to check Grok and Gemini together; each provider's status and
 
 Answers, notes, mock progress and feedback are saved in this browser on this device, not in the catalog database or automatically in the repository. Clearing site data, changing browser or port, or using a different device can make them unavailable. Use **Export backup** regularly and **Import backup** to restore; importing replaces the current browser data. Backups contain your study text, so protect them and do not commit confidential material. The database rebuild does not touch browser data or exported backups.
 
-You can pause either timer whenever you need to; hiding or closing the page pauses it as well. The mock timer counts up to six hours of working time, and the session goal is a reminder, not a limit. Mock answers are separate practice attempts; use the checklist and mock review to track your paper. Verify the current exam and technical submission requirements with ICE.
+You can pause either timer whenever you need to; hiding or closing the page pauses it as well. The mock timer counts up to six hours of working time, and the session goal is a reminder, not a limit. The question checklist follows the selected sitting's count (five or six). Mock answers are separate practice attempts; use the checklist and mock review to track your paper. Verify the current exam and technical submission requirements with ICE.
 
 Each AI request asks for confirmation. A lesson sends the selected module names, but not your notes or answers, as study data to xAI; practice review sends the selected fields, question/context, answer and review evidence, while submission review sends the submission fields. Requests may incur charges. Do not enter confidential project information or upload official documents. AI-generated lessons and self-check questions are not official ICE material, and feedback is not an official mark; supply your own sourced guidance and examiner-report notes for evidence-based review, and independently check citations and current requirements.
 

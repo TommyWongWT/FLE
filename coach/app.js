@@ -14,7 +14,22 @@ const freshState = () => ({
   version: 1, attempts: [], topics: [], submission: { evidence: "", criteria: "", draft: "", feedback: "", crosscheck: "" },
   mock: { sitting: "", records: {} }, learning: freshLearning(),
 });
-const freshMock = () => ({ elapsed: 0, checks: [false, false, false, false, false], notes: "", goal: 30 });
+function questionCount(sittingId) {
+  const sitting = catalog.find((s) => s.id === sittingId);
+  const count = Number(sitting?.question_count);
+  return Number.isInteger(count) && count >= 1 && count <= 10 ? count : 5;
+}
+function freshMock(sittingId) {
+  return { elapsed: 0, checks: Array(questionCount(sittingId)).fill(false), notes: "", goal: 30 };
+}
+function alignMockChecks(record, sittingId) {
+  const count = questionCount(sittingId);
+  if (!Array.isArray(record.checks)) record.checks = [];
+  if (record.checks.length === count) return record;
+  record.checks = record.checks.slice(0, count);
+  while (record.checks.length < count) record.checks.push(false);
+  return record;
+}
 let state;
 let catalog = [];
 let currentAttempt = null;
@@ -35,7 +50,7 @@ function validState(data) {
     object(data.submission) && ["evidence", "criteria", "draft", "feedback"].every((key) => text(data.submission[key])) && (data.submission.crosscheck === undefined || text(data.submission.crosscheck)) &&
     (data.learning === undefined || (object(data.learning) && fieldList(data.learning.fields) && fieldList(data.learning.lessonFields) && ["lesson", "crosscheck", "sitting"].every((key) => text(data.learning[key])))) &&
     object(data.mock) && text(data.mock.sitting) && object(data.mock.records) &&
-    Object.values(data.mock.records).every((m) => object(m) && Number.isFinite(m.elapsed) && m.elapsed >= 0 && Array.isArray(m.checks) && m.checks.length === 5 && m.checks.every((c) => typeof c === "boolean") && text(m.notes) && Number.isFinite(m.goal) && m.goal >= 1 && m.goal <= 360);
+    Object.values(data.mock.records).every((m) => object(m) && Number.isFinite(m.elapsed) && m.elapsed >= 0 && Array.isArray(m.checks) && m.checks.length >= 1 && m.checks.length <= 10 && m.checks.every((c) => typeof c === "boolean") && text(m.notes) && Number.isFinite(m.goal) && m.goal >= 1 && m.goal <= 360);
 }
 function save() {
   try {
@@ -67,8 +82,8 @@ function fieldNames(ids) {
 }
 function mock() {
   const key = state.mock.sitting;
-  if (!state.mock.records[key]) state.mock.records[key] = freshMock();
-  return state.mock.records[key];
+  if (!state.mock.records[key]) state.mock.records[key] = freshMock(key);
+  return alignMockChecks(state.mock.records[key], key);
 }
 function titleFor(id) { return catalog.find((s) => s.id === id)?.title || id || "No sitting"; }
 function fillSelect(id, value) {
@@ -461,7 +476,7 @@ async function start() {
   });
   $("mock-reset").addEventListener("click", () => {
     if (!confirm("Reset this sitting's mock timer and question checklist? Your attempts and mock review notes are kept.")) return;
-    pause("mock"); mock().elapsed = 0; mock().checks = [false, false, false, false, false]; clocks.mock.session = 0; save(); renderMock();
+    pause("mock"); mock().elapsed = 0; mock().checks = Array(questionCount(state.mock.sitting)).fill(false); clocks.mock.session = 0; save(); renderMock();
   });
   bindFields("submission", ["evidence", "criteria", "draft", "feedback", "crosscheck"], () => state.submission);
   $("submission-review").addEventListener("click", () => {

@@ -33,6 +33,25 @@
       "season": null,
       "slug": "refugee-camp",
       "title": "Refugee Camp",
+      "question_count": 6,
+      "parts": [
+        {
+          "name": "Pre-Construction Phase",
+          "questions": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Construction Phase",
+          "questions": [
+            4,
+            5,
+            6
+          ]
+        }
+      ],
       "scenario": {
         "filename": "FLE_scenario_2019_refugee-camp.pdf",
         "pages": 5,
@@ -54,6 +73,8 @@
       "season": "spring",
       "slug": "ppp-island-transport",
       "title": "PPP Island Transport",
+      "question_count": 6,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2021_spring_ppp-island-transport.pdf",
         "pages": 7,
@@ -75,6 +96,8 @@
       "season": "autumn",
       "slug": "victoria-station",
       "title": "Victoria Station",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2021_autumn_victoria-station.pdf",
         "pages": 6,
@@ -96,6 +119,8 @@
       "season": "autumn",
       "slug": "wamala-ward",
       "title": "Wamala Ward",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2022_autumn_wamala-ward.pdf",
         "pages": 4,
@@ -117,6 +142,8 @@
       "season": "spring",
       "slug": "gautrain",
       "title": "Gautrain",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2023_spring_gautrain.pdf",
         "pages": 6,
@@ -138,6 +165,8 @@
       "season": "autumn",
       "slug": "nieuhaven-tidal-barrier",
       "title": "Nieuhaven Tidal Barrier",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2023_autumn_nieuhaven-tidal-barrier.pdf",
         "pages": 3,
@@ -159,6 +188,8 @@
       "season": "spring",
       "slug": "st-davids-bridge",
       "title": "St David's Bridge",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2024_spring_st-davids-bridge.pdf",
         "pages": 6,
@@ -180,6 +211,8 @@
       "season": "autumn",
       "slug": "cross-bay-link",
       "title": "Cross Bay Link",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2024_autumn_cross-bay-link.pdf",
         "pages": 5,
@@ -201,6 +234,8 @@
       "season": "spring",
       "slug": "withernsea-wwtw",
       "title": "Withernsea WwTW",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2025_spring_withernsea-wwtw.pdf",
         "pages": 6,
@@ -222,6 +257,8 @@
       "season": "autumn",
       "slug": "regency-restoration",
       "title": "Regency Restoration",
+      "question_count": 5,
+      "parts": [],
       "scenario": {
         "filename": "FLE_scenario_2025_autumn_regency-restoration.pdf",
         "pages": 6,
@@ -243,6 +280,29 @@
       "season": "spring",
       "slug": "telfjordholme",
       "title": "Telfjordholme",
+      "question_count": 5,
+      "parts": [
+        {
+          "name": "Part 1",
+          "questions": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "Part 2",
+          "questions": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Part 3",
+          "questions": [
+            5
+          ]
+        }
+      ],
       "scenario": {
         "filename": "FLE_scenario_2026_spring_telfjordholme.pdf",
         "pages": 6,
