@@ -52,13 +52,54 @@ function validState(data) {
     object(data.mock) && text(data.mock.sitting) && object(data.mock.records) &&
     Object.values(data.mock.records).every((m) => object(m) && Number.isFinite(m.elapsed) && m.elapsed >= 0 && Array.isArray(m.checks) && m.checks.length >= 1 && m.checks.length <= 10 && m.checks.every((c) => typeof c === "boolean") && text(m.notes) && Number.isFinite(m.goal) && m.goal >= 1 && m.goal <= 360);
 }
+let persistTimer = 0;
 function save() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    scheduleDiskSave();
     return true;
   } catch (error) {
     notice(`Could not save to browser storage: ${error.message}. Export a backup now.`);
     return false;
+  }
+}
+function scheduleDiskSave() {
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => { persistCurrentAttempt(); }, 400);
+}
+persistCurrentAttempt.noticed = persistCurrentAttempt.noticed || new Set();
+async function persistCurrentAttempt() {
+  const a = attempt();
+  if (!a || !a.sitting) return;
+  try {
+    const response = await fetch("/api/attempts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...a, status: a.answer.trim() || a.context.trim() ? "in_progress" : "not_started" }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      notice(result.error || "Could not save this attempt to the sitting folder.");
+      return;
+    }
+    if (result.path && !persistCurrentAttempt.noticed.has(result.path)) {
+      persistCurrentAttempt.noticed.add(result.path);
+      notice(`Also saved to ${result.path}. Keep confidential data out of this public repo.`);
+    }
+  } catch (error) {
+    notice(`Could not save this attempt to the sitting folder: ${error.message}`);
+  }
+}
+async function deletePersistedAttempt(item) {
+  if (!item?.sitting || !item?.id) return;
+  try {
+    const response = await fetch(`/api/attempts?sitting=${encodeURIComponent(item.sitting)}&id=${encodeURIComponent(item.id)}`, { method: "DELETE" });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      notice(result.error || "Could not delete the file copy of this attempt.");
+    }
+  } catch (error) {
+    notice(`Could not delete the file copy of this attempt: ${error.message}`);
   }
 }
 function element(tag, text, className) {
@@ -420,7 +461,14 @@ async function start() {
   });
   $("delete-attempt").addEventListener("click", () => {
     if (!confirm("Delete this attempt? This cannot be undone.")) return;
-    pause("practice"); state.attempts = state.attempts.filter((a) => a.id !== currentAttempt); currentAttempt = null; save(); renderAttempts(); renderAttempt();
+    pause("practice");
+    const item = attempt();
+    state.attempts = state.attempts.filter((a) => a.id !== currentAttempt);
+    currentAttempt = null;
+    save();
+    deletePersistedAttempt(item);
+    renderAttempts();
+    renderAttempt();
   });
   $("practice-toggle").addEventListener("click", () => {
     if (clocks.practice.running) pause("practice");

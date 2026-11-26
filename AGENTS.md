@@ -17,8 +17,8 @@ Answer every limb. Apply the advice to this scenario; reject generic syllabus du
 
 - Use grill-me to sharpen a plan or an exam answer before writing notes or files.
 - Use pstack after `/setup-pstack`. Start work with `/poteto-mode` and follow the playbook it selects.
-- Put session write-ups in `notes/`. Put exploratory work in `explorations/` (one topic per folder or file). Put my own FLE answers and sitting notes in `fle/<sitting-id>/`.
-- Look up official sittings in `fle/db/sittings.json` or `fle/db/fle.db`. Official PDFs stay on Google Drive; do not copy them into this repository. Rebuild the database with `python fle/db/init_db.py` if the catalog JSON changes.
+- Put session write-ups in `notes/`. Put exploratory work in `explorations/` (one topic per folder or file). Put my own FLE answers, sitting notes, and coach-saved attempts in `fle/<sitting-id>/`.
+- Look up official sittings in `fle/db/sittings.json` or `fle/db/fle.db`. Official PDFs stay on Google Drive; do not copy them into this repository. Rebuild the database with `python fle/db/init_db.py` if the catalog JSON changes; attempt rows are kept.
 
 ## Do not
 

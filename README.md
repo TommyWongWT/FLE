@@ -15,7 +15,7 @@ The sitting this repo is aimed at is **23 March 2027 (Hong Kong time only)**. Ap
 - `notes/` — durable notes from grill-me or pstack sessions
 - `fle/TIMELINE.md` — dates and a week-by-week plan for the 23 March 2027 sitting (Hong Kong time)
 - `fle/db/` — past-paper catalog (metadata and Drive pointers only, including question counts)
-- `fle/<sitting-id>/` — my own answers and notes, by sitting
+- `fle/<sitting-id>/` — my own answers and attempts, by sitting
 - `prompts/grill-me-fle.md` — grill-me playbook for FLE answers
 
 ## Past-paper database
@@ -48,7 +48,7 @@ The launcher opens <http://127.0.0.1:8765/>. Stop the server with Ctrl+C. An API
 
 Use **Check APIs** to check Grok and Gemini together; each provider's status and any error are shown separately. It makes one authenticated model-information request per provider, sends no study text and generates no tokens. A successful check confirms that the model-information endpoint responded, not that generation access or billing is working; a key may also lack permission for the metadata endpoint even if other endpoints work. No check runs automatically; click again to refresh.
 
-Answers, notes, mock progress and feedback are saved in this browser on this device, not in the catalog database or automatically in the repository. Clearing site data, changing browser or port, or using a different device can make them unavailable. Use **Export backup** regularly and **Import backup** to restore; importing replaces the current browser data. Backups contain your study text, so protect them and do not commit confidential material. The database rebuild does not touch browser data or exported backups.
+Notes, mock progress and feedback are saved in this browser on this device. Practice attempts are also written to `fle/<sitting-id>/attempts/` and recorded in the catalog `attempts` table (see `fle/ATTEMPTS.md`). Clearing site data, changing browser or port, or using a different device can still drop the browser copy. Use **Export backup** regularly and **Import backup** to restore; importing replaces the current browser data. Backups contain your study text, so protect them and do not commit confidential material. Rebuilding the database keeps attempt rows; it does not touch browser data or exported backups.
 
 You can pause either timer whenever you need to; hiding or closing the page pauses it as well. The mock timer counts up to six hours of working time, and the session goal is a reminder, not a limit. The question checklist follows the selected sitting's count (five or six). Mock answers are separate practice attempts; use the checklist and mock review to track your paper. Verify the current exam and technical submission requirements with ICE.
 

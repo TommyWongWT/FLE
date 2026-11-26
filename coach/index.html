@@ -102,7 +102,7 @@
         <div class="card"><div class="row"><label>Mock sitting<select id="mock-sitting"></select></label><label>Session goal (minutes)<input id="mock-goal" type="number" min="1" max="360" value="30"></label></div>
           <div class="mock-clock"><span>Working time remaining</span><strong id="mock-time">06:00:00</strong><span id="mock-session">Session: 00:00:00</span></div>
           <div class="actions"><button id="mock-toggle">Start mock</button><button id="mock-reset" class="secondary">Reset mock timer</button></div>
-          <p class="muted">The session goal is a reminder, not a limit. Pausing, closing or hiding the page stops the timer. The checklist follows the selected sitting's question count. Create one practice attempt per question; your answers are saved separately.</p>
+          <p class="muted">The session goal is a reminder, not a limit. Pausing, closing or hiding the page stops the timer. The checklist follows the selected sitting's question count. Create one practice attempt per question; answers are saved in the browser and also under fle/&lt;sitting-id&gt;/attempts/.</p>
           <div id="mock-links" class="links"></div><h3>Question checklist</h3><div id="mock-checklist"></div>
           <label>Mock review and next actions<textarea id="mock-notes" rows="5" placeholder="Reflect on timing, coverage and recurring issues."></textarea></label>
         </div>
@@ -122,7 +122,7 @@
           <label>Gemini cross-check <span class="muted">(rerun after changing your draft or Grok feedback)</span><textarea id="submission-crosscheck" rows="8" placeholder="Gemini's separate cross-check appears here."></textarea></label>
         </div>
       </section>
-      <footer>Saved in this browser on this device. Export backups regularly; clearing browser data can erase your work. Official documents remain on Drive.</footer>
+      <footer>Browser storage still holds a working copy. Practice attempts are also written to fle/&lt;sitting-id&gt;/attempts/ and the local catalog database. Export backups regularly. Official documents remain in the private Drive folder.</footer>
     </main>
   </div>
 </body>

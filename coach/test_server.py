@@ -1,14 +1,22 @@
 import io
+import sys
+from pathlib import Path as _Path
+sys.path.insert(0, str(_Path(__file__).resolve().parent))
 import json
 import os
+import sqlite3
+import tempfile
 import threading
 import unittest
+import uuid
 from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler
+from pathlib import Path
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 from urllib.request import Request
 
+import server
 from server import Handler, ThreadingHTTPServer, open_provider
 
 
@@ -188,3 +196,132 @@ class ServerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AttemptPersistenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="fle-attempts-")
+        self.addCleanup(self.temp.cleanup)
+        root = Path(self.temp.name)
+        fle = root / "fle"
+        sitting = fle / "2019-refugee-camp"
+        sitting.mkdir(parents=True)
+        db_dir = fle / "db"
+        db_dir.mkdir()
+        repo = Path(__file__).resolve().parents[1]
+        catalog = json.loads((repo / "fle" / "db" / "sittings.json").read_text(encoding="utf-8"))
+        (db_dir / "sittings.json").write_text(json.dumps(catalog), encoding="utf-8")
+        (db_dir / "schema.sql").write_text((repo / "fle" / "db" / "schema.sql").read_text(encoding="utf-8"), encoding="utf-8")
+        (db_dir / "init_db.py").write_text((repo / "fle" / "db" / "init_db.py").read_text(encoding="utf-8"), encoding="utf-8")
+        self.fle = fle
+        self.db = db_dir / "fle.db"
+        self.catalog = db_dir / "sittings.json"
+        patches = [
+            patch.object(server, "FLE_DIR", fle),
+            patch.object(server, "CATALOG", self.catalog),
+            patch.object(server, "DB_PATH", self.db),
+        ]
+        for item in patches:
+            item.start()
+            self.addCleanup(item.stop)
+        self.build_db()
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        self.addCleanup(self._stop)
+
+    def _stop(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+
+    def build_db(self):
+        conn = sqlite3.connect(self.db)
+        try:
+            conn.executescript((self.db.parent / "schema.sql").read_text(encoding="utf-8"))
+            catalog = json.loads(self.catalog.read_text(encoding="utf-8"))
+            for sitting in catalog["sittings"]:
+                conn.execute(
+                    "INSERT INTO sittings (id, year, season, slug, title, question_count, parts_json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        sitting["id"], sitting["year"], sitting.get("season"), sitting["slug"],
+                        sitting["title"], sitting["question_count"], json.dumps(sitting.get("parts") or []),
+                    ),
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def request(self, method, path, payload=None, origin=None):
+        host = f"127.0.0.1:{self.server.server_port}"
+        connection = HTTPConnection("127.0.0.1", self.server.server_port)
+        body = json.dumps(payload) if payload is not None else None
+        headers = {"Origin": origin or f"http://{host}"}
+        if body is not None:
+            headers["Content-Type"] = "application/json"
+        connection.request(method, path, body, headers)
+        response = connection.getresponse()
+        raw = response.read()
+        connection.close()
+        result = json.loads(raw) if raw else {}
+        return response.status, result
+
+    def sample(self, **overrides):
+        data = {
+            "id": str(uuid.uuid4()),
+            "sitting": "2019-refugee-camp",
+            "question": "Question 1",
+            "context": "Siting factors",
+            "answer": "My practice answer",
+            "evidence": "",
+            "feedback": "",
+            "crosscheck": "",
+            "next": "",
+            "fields": ["risk"],
+            "elapsed": 12,
+            "date": "2026-11-26T00:00:00Z",
+            "status": "in_progress",
+        }
+        data.update(overrides)
+        return data
+
+    def test_saves_attempt_to_sitting_folder_and_database(self):
+        payload = self.sample()
+        status, result = self.request("POST", "/api/attempts", payload)
+        self.assertEqual(status, 200, result)
+        path = self.fle / "2019-refugee-camp" / "attempts" / f"{payload['id']}.md"
+        self.assertTrue(path.is_file())
+        text = path.read_text(encoding="utf-8")
+        self.assertIn("My practice answer", text)
+        self.assertIn("Question 1", text)
+        conn = sqlite3.connect(self.db)
+        row = conn.execute("SELECT sitting_id, question, status, notes_path FROM attempts WHERE attempt_uid = ?", (payload["id"],)).fetchone()
+        conn.close()
+        self.assertEqual(row[0], "2019-refugee-camp")
+        self.assertEqual(row[1], "Question 1")
+        self.assertEqual(row[2], "in_progress")
+        self.assertTrue(row[3].endswith(f"{payload['id']}.md"))
+
+    def test_rejects_unknown_sitting_and_does_not_write_outside_folder(self):
+        payload = self.sample(sitting="not-a-sitting")
+        status, result = self.request("POST", "/api/attempts", payload)
+        self.assertEqual(status, 400)
+        self.assertFalse((self.fle / "not-a-sitting").exists())
+
+    def test_lists_and_deletes_attempt(self):
+        payload = self.sample()
+        self.assertEqual(self.request("POST", "/api/attempts", payload)[0], 200)
+        status, result = self.request("GET", "/api/attempts?sitting=2019-refugee-camp")
+        self.assertEqual(status, 200)
+        self.assertEqual(result["attempts"][0]["id"], payload["id"])
+        status, result = self.request("DELETE", f"/api/attempts?sitting=2019-refugee-camp&id={payload['id']}")
+        self.assertEqual(status, 200, result)
+        path = self.fle / "2019-refugee-camp" / "attempts" / f"{payload['id']}.md"
+        self.assertFalse(path.exists())
+        conn = sqlite3.connect(self.db)
+        self.assertIsNone(conn.execute("SELECT 1 FROM attempts WHERE attempt_uid = ?", (payload["id"],)).fetchone())
+        conn.close()
+
+    def test_attempts_require_same_origin_for_writes(self):
+        payload = self.sample()
+        self.assertEqual(self.request("POST", "/api/attempts", payload, "https://example.com")[0], 403)

@@ -4,17 +4,24 @@
 import argparse
 import json
 import os
+import re
+import sqlite3
 import threading
 import webbrowser
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 ROOT = Path(__file__).resolve().parent
-CATALOG = ROOT.parent / "fle" / "db" / "sittings.json"
+FLE_DIR = ROOT.parent / "fle"
+CATALOG = FLE_DIR / "db" / "sittings.json"
+DB_PATH = FLE_DIR / "db" / "fle.db"
 MAX_BODY = 200_000
+ATTEMPT_UID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+ATTEMPT_STATUSES = {"not_started", "in_progress", "reviewed"}
 DEFAULT_MODEL = "grok-4.7"
 DEFAULT_GEMINI_MODEL = "gemini-3.8-flash"
 SYSTEM = (
@@ -31,6 +38,161 @@ SYSTEM = (
     "civil engineering example and a few original self-check questions. Do not reproduce or invent "
     "official past-paper questions; acknowledge that the official syllabus was not supplied."
 )
+
+
+
+def utc_now():
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def load_catalog():
+    return json.loads(CATALOG.read_text(encoding="utf-8"))
+
+
+def sitting_ids():
+    return {sitting["id"] for sitting in load_catalog()["sittings"]}
+
+
+def attempt_dir(sitting_id):
+    if sitting_id not in sitting_ids() or sitting_id in {".", ".."} or "/" in sitting_id or "\\" in sitting_id:
+        raise ValueError("Unknown or invalid sitting.")
+    return FLE_DIR / sitting_id / "attempts"
+
+
+def attempt_path(sitting_id, uid):
+    if not ATTEMPT_UID.match(uid or ""):
+        raise ValueError("Invalid attempt id.")
+    return attempt_dir(sitting_id) / f"{uid}.md"
+
+
+def parse_fields(value):
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError("fields must be a list of strings.")
+    return value
+
+
+def validate_attempt(data):
+    if not isinstance(data, dict):
+        raise ValueError("Expected a JSON object.")
+    uid = data.get("id")
+    sitting = data.get("sitting")
+    if not ATTEMPT_UID.match(uid or ""):
+        raise ValueError("A valid attempt id is required.")
+    if sitting not in sitting_ids():
+        raise ValueError("Choose a catalogued sitting before saving an attempt to disk.")
+    status = data.get("status") or "in_progress"
+    if status not in ATTEMPT_STATUSES:
+        raise ValueError("Invalid attempt status.")
+    elapsed = data.get("elapsed", 0)
+    if not isinstance(elapsed, (int, float)) or elapsed < 0:
+        raise ValueError("Invalid elapsed time.")
+    text_fields = {}
+    for key in ("question", "context", "answer", "evidence", "feedback", "crosscheck", "next", "date"):
+        value = data.get(key, "")
+        if value is None:
+            value = ""
+        if not isinstance(value, str):
+            raise ValueError(f"{key} must be text.")
+        text_fields[key] = value
+    record = {
+        "id": uid,
+        "sitting": sitting,
+        "status": status,
+        "fields": parse_fields(data.get("fields")),
+        "elapsed": int(elapsed),
+        **text_fields,
+    }
+    if not record["date"]:
+        record["date"] = utc_now()
+    return record
+
+
+def render_attempt_markdown(record):
+    fields = ", ".join(record["fields"]) if record["fields"] else ""
+    def block(title, value):
+        body = value.strip() if value else ""
+        return f"## {title}\n\n{body}\n"
+    parts = [
+        "# Attempt\n",
+        f"- Sitting: {record['sitting']}",
+        f"- Question: {record['question']}",
+        f"- Status: {record['status']}",
+        f"- Started: {record['date']}",
+        f"- Updated: {utc_now()}",
+        f"- Study focus: {fields}",
+        f"- Elapsed seconds: {record['elapsed']}",
+        "",
+        block("Context", record["context"]),
+        block("Answer", record["answer"]),
+        block("Evidence", record["evidence"]),
+        block("Grok feedback", record["feedback"]),
+        block("Gemini cross-check", record["crosscheck"]),
+        block("Next action", record["next"]),
+    ]
+    return "\n".join(parts).rstrip() + "\n"
+
+
+def upsert_attempt_row(record, notes_path):
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute(
+            "INSERT INTO attempts (attempt_uid, sitting_id, question, started_at, updated_at, notes_path, status) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(attempt_uid) DO UPDATE SET "
+            "sitting_id = excluded.sitting_id, "
+            "question = excluded.question, "
+            "updated_at = excluded.updated_at, "
+            "notes_path = excluded.notes_path, "
+            "status = excluded.status",
+            (
+                record["id"],
+                record["sitting"],
+                record["question"],
+                record["date"],
+                utc_now(),
+                notes_path,
+                record["status"],
+            ),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def delete_attempt_row(uid):
+    if not DB_PATH.exists():
+        return
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute("DELETE FROM attempts WHERE attempt_uid = ?", (uid,))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def list_attempt_files(sitting=None):
+    ids = sitting_ids()
+    chosen = [sitting] if sitting else sorted(ids)
+    found = []
+    for sitting_id in chosen:
+        if sitting_id not in ids:
+            raise ValueError("Unknown sitting.")
+        folder = FLE_DIR / sitting_id / "attempts"
+        if not folder.is_dir():
+            continue
+        for path in sorted(folder.glob("*.md")):
+            if ATTEMPT_UID.match(path.stem):
+                found.append({
+                    "id": path.stem,
+                    "sitting": sitting_id,
+                    "path": str(path.relative_to(FLE_DIR.parent)).replace("\\", "/"),
+                    "updated": path.stat().st_mtime,
+                })
+    return found
 
 
 class NoRedirects(HTTPRedirectHandler):
@@ -61,16 +223,63 @@ class Handler(BaseHTTPRequestHandler):
             f"localhost:{self.server.server_port}",
         }
 
+    def same_origin(self):
+        return self.headers.get("Origin") == f"http://{self.headers.get('Host')}"
+
+    def do_DELETE(self):
+        if not self.valid_host() or not self.same_origin():
+            return self.json_response(403, {"error": "Request must come from this local app."})
+        parsed = urlparse(self.path)
+        if parsed.path != "/api/attempts":
+            return self.json_response(404, {"error": "Not found."})
+        query = parse_qs(parsed.query)
+        uid = (query.get("id") or [None])[0]
+        sitting = (query.get("sitting") or [None])[0]
+        try:
+            target = attempt_path(sitting, uid)
+        except ValueError as exc:
+            return self.json_response(400, {"error": str(exc)})
+        try:
+            if target.exists():
+                target.unlink()
+            delete_attempt_row(uid)
+        except OSError as exc:
+            return self.json_response(500, {"error": f"Could not delete the attempt: {exc}"})
+        return self.json_response(200, {"deleted": uid})
+
+    def save_attempt(self, data):
+        try:
+            record = validate_attempt(data)
+            path = attempt_path(record["sitting"], record["id"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(render_attempt_markdown(record), encoding="utf-8")
+            relative = str(path.relative_to(FLE_DIR.parent)).replace("\\", "/")
+            upsert_attempt_row(record, relative)
+        except ValueError as exc:
+            return self.json_response(400, {"error": str(exc)})
+        except (OSError, sqlite3.Error) as exc:
+            return self.json_response(500, {"error": f"Could not save the attempt: {exc}"})
+        return self.json_response(200, {"saved": record["id"], "path": relative})
+
     def do_GET(self):
         if not self.valid_host():
             return self.json_response(403, {"error": "Invalid host."})
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/attempts":
+            try:
+                sitting = parse_qs(parsed.query).get("sitting", [None])[0]
+                return self.json_response(200, {"attempts": list_attempt_files(sitting)})
+            except ValueError as exc:
+                return self.json_response(400, {"error": str(exc)})
+            except OSError as exc:
+                return self.json_response(500, {"error": f"Could not list attempts: {exc}"})
         files = {
             "/": (ROOT / "index.html", "text/html; charset=utf-8"),
             "/app.js": (ROOT / "app.js", "text/javascript; charset=utf-8"),
             "/style.css": (ROOT / "style.css", "text/css; charset=utf-8"),
             "/api/sittings": (CATALOG, "application/json; charset=utf-8"),
         }
-        entry = files.get(self.path)
+        entry = files.get(parsed.path)
         if not entry:
             return self.json_response(404, {"error": "Not found."})
         try:
@@ -81,7 +290,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.valid_host() or self.headers.get("Origin") != f"http://{self.headers.get('Host')}":
             return self.json_response(403, {"error": "Request must come from this local app."})
-        if self.path not in ("/api/feedback", "/api/status", "/api/crosscheck", "/api/gemini-status"):
+        if self.path not in ("/api/feedback", "/api/status", "/api/crosscheck", "/api/gemini-status", "/api/attempts"):
             return self.json_response(404, {"error": "Not found."})
         if self.headers.get_content_type() != "application/json":
             return self.json_response(415, {"error": "Expected JSON."})
@@ -92,6 +301,8 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(length))
             if not isinstance(data, dict):
                 raise ValueError("Expected a JSON object.")
+            if self.path == "/api/attempts":
+                return self.save_attempt(data)
             if self.path in ("/api/status", "/api/gemini-status"):
                 if data:
                     raise ValueError("Status checks do not accept study material.")
