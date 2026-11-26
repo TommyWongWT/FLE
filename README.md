@@ -16,6 +16,7 @@ The sitting this repo is aimed at is **23 March 2027 (Hong Kong time only)**. Ap
 - `fle/TIMELINE.md` — dates and a week-by-week plan for the 23 March 2027 sitting (Hong Kong time)
 - `fle/db/` — past-paper catalog (metadata and Drive pointers only, including question counts)
 - `fle/<sitting-id>/` — my own answers and attempts, by sitting
+- `fle/technical-submission/` — Technical Submission draft and word counter
 - `prompts/grill-me-fle.md` — grill-me playbook for FLE answers
 
 ## Past-paper database
@@ -59,6 +60,10 @@ After Grok gives a lesson or feedback, **Cross-check with Gemini** sends that ou
 ## Grill-me
 
 For a real grill of an FLE answer, follow [`prompts/grill-me-fle.md`](prompts/grill-me-fle.md) and the playbook in `AGENTS.md`. Each question must be taken in order: context, then options, then recommendation, then residual risk. Every limb must be answered and applied to that sitting. Use the examiner's report from the private Drive copy as evidence after an unaided attempt.
+
+## Technical Submission
+
+Draft the TS in [`fle/technical-submission/`](fle/technical-submission/). The upload deadline for this sitting is **5 March 2027** (Hong Kong time date from ICE's key membership dates; recheck before upload). Count words with `python fle/technical-submission/wordcount.py`. Keep confidential employer, client, and project-identifying data out of this public repository.
 
 ## Rules
 
