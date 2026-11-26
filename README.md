@@ -15,7 +15,7 @@ The sitting this repo is aimed at is **23 March 2027 (Hong Kong time only)**. Ap
 - `notes/` — durable notes from grill-me or pstack sessions
 - `fle/TIMELINE.md` — dates and a week-by-week plan for the 23 March 2027 sitting (Hong Kong time)
 - `fle/db/` — past-paper catalog (metadata and Drive pointers only, including question counts)
-- `fle/<sitting-id>/` — my own answers and attempts, by sitting
+- `fle/<sitting-id>/` — my own answers, attempts, and marking-theme notes, by sitting
 - `fle/technical-submission/` — Technical Submission draft and word counter
 - `prompts/grill-me-fle.md` — grill-me playbook for FLE answers
 
