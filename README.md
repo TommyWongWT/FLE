@@ -5,10 +5,15 @@ Learning repo for:
 1. ICE Further Learning Exam past-paper practice with grill-me coaching
 2. General learning with grill-me and pstack (`/setup-pstack`, `/poteto-mode`, and related skills)
 
+## Timeline
+
+The sitting this repo is aimed at is **23 March 2027 (Hong Kong time only)**. Application, Technical Submission, exam, and results dates, plus a week-by-week plan covering all 11 papers and the TS, are in [`fle/TIMELINE.md`](fle/TIMELINE.md). Recheck the official ICE pages linked there before you apply or upload.
+
 ## Layout
 
 - `explorations/` — one topic per folder or file
 - `notes/` — durable notes from grill-me or pstack sessions
+- `fle/TIMELINE.md` — dates and a week-by-week plan for the 23 March 2027 sitting (Hong Kong time)
 - `fle/db/` — past-paper catalog (metadata and Drive pointers only)
 - `fle/<sitting-id>/` — my own answers and notes, by sitting
 
