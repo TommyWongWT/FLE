@@ -61,6 +61,16 @@ After Grok gives a lesson or feedback, **Cross-check with Gemini** sends that ou
 
 For a real grill of an FLE answer, follow [`prompts/grill-me-fle.md`](prompts/grill-me-fle.md) and the playbook in `AGENTS.md`. Each question must be taken in order: context, then options, then recommendation, then residual risk. Every limb must be answered and applied to that sitting. Use the examiner's report from the private Drive copy as evidence after an unaided attempt.
 
+## General learning with pstack
+
+For non-FLE study in this repo, install and configure pstack yourself in Cursor:
+
+1. `/add-plugin pstack`
+2. `/setup-pstack` — you choose models and budget; this repository does not record those choices
+3. Start work with `/poteto-mode` and follow the playbook it selects
+
+Write-ups go in `notes/` or `explorations/`.
+
 ## Technical Submission
 
 Draft the TS in [`fle/technical-submission/`](fle/technical-submission/). The upload deadline for this sitting is **5 March 2027** (Hong Kong time date from ICE's key membership dates; recheck before upload). Count words with `python fle/technical-submission/wordcount.py`. Keep confidential employer, client, and project-identifying data out of this public repository.
