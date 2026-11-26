@@ -21,7 +21,7 @@ Do not record model choices in this repository. Tommy runs `/add-plugin pstack` 
 
 - Use grill-me to sharpen a plan or an exam answer before writing notes or files.
 - Put session write-ups in `notes/`. Put exploratory work in `explorations/` (one topic per folder or file). Put my own FLE answers, sitting notes, and coach-saved attempts in `fle/<sitting-id>/`. Marking-theme notes are in `fle/<sitting-id>/MARKING_THEMES.md`. Draft the Technical Submission in `fle/technical-submission/`. Follow `fle/TIMELINE.md` for the 23 March 2027 sitting.
-- Look up official sittings in `fle/db/sittings.json` or `fle/db/fle.db`. Official PDFs stay on Google Drive; do not copy them into this repository. Rebuild the database with `python fle/db/init_db.py` if the catalog JSON changes; attempt rows are kept.
+- Look up official sittings in `fle/db/sittings.json` or `fle/db/fle.db` (including `question_count` and any named parts). Official PDFs stay on Google Drive; do not copy them into this repository. Rebuild the database with `python fle/db/init_db.py` if the catalog JSON changes; attempt rows are kept.
 
 ## Do not
 

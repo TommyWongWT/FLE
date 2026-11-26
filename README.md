@@ -41,7 +41,22 @@ The coach also supports Grok review and challenge prompts, optional Gemini cross
 
 The launcher checks Python and creates the ignored `.venv` automatically. It does not install Python or other packages, or overwrite an existing environment. If PowerShell blocks scripts, follow your organisation's execution policy or ask your administrator.
 
-At the hidden prompts, enter your own [xAI](https://console.x.ai/) and [Gemini](https://aistudio.google.com/apikey) API keys, or press Enter to skip either provider. Never share keys in chat or commit them. Existing saved keys are retained and will not be requested again. Each key is encrypted for your Windows account and saved outside the repository in `%LOCALAPPDATA%\FLECoach\` as `xai-key.txt` or `gemini-key.txt`; neither is uploaded to GitHub. Keep the keys private even though they are encrypted. To replace one, delete its local file and run the launcher again.
+### First-time setup on Unix (macOS or Linux)
+
+1. Clone this repository and open a terminal in its folder.
+2. Install Python 3.10 or newer if needed.
+3. Optionally export `XAI_API_KEY` and `GEMINI_API_KEY` in that shell (the Unix launcher does not encrypt or store keys the way the Windows launcher does; do not write keys into the repository).
+4. Run:
+
+```bash
+./coach/start.sh
+```
+
+The script calls `coach/setup.sh` to create or reuse the ignored `.venv`. It will not overwrite a broken environment. Set `FLE_COACH_PORT` if port 8765 is in use. Stop the server with Ctrl+C.
+
+### API keys
+
+On Windows, at the hidden prompts, enter your own [xAI](https://console.x.ai/) and [Gemini](https://aistudio.google.com/apikey) API keys, or press Enter to skip either provider. Never share keys in chat or commit them. Existing saved keys are retained and will not be requested again. Each key is encrypted for your Windows account and saved outside the repository in `%LOCALAPPDATA%\FLECoach\` as `xai-key.txt` or `gemini-key.txt`; neither is uploaded to GitHub. Keep the keys private even though they are encrypted. To replace one, delete its local file and run the launcher again.
 
 The keys are decrypted into the local server's process environment while it runs and sent over HTTPS to their respective providers for API calls. Requests do not follow redirects. Encryption is not absolute protection: software running as your Windows user or an administrator may be able to access the keys. Protect your account and use provider spending limits.
 
